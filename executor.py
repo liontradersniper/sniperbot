@@ -1,5 +1,6 @@
 import random
 from typing import List, Dict
+from typing import Dict, List
 
 from logger import log_trade
 
@@ -45,9 +46,35 @@ def simulate_trade(price: float, direction: str, signal_type: str = "", symbol: 
 
 def run(signals: List[Dict]) -> None:
     """Execute trade simulations for a list of signals."""
+def run(signals: List[Dict]) -> Dict[str, float]:
+    """Execute trade simulations and return summary statistics.
+
+    Parameters
+    ----------
+    signals : list[dict]
+        Trading signals produced by the strategy.
+
+    Returns
+    -------
+    dict
+        Summary statistics with keys ``tp``, ``sl``, ``total``, and ``net_pips``.
+    """
+
+    tp_count = 0
+    sl_count = 0
+
     for sig in signals:
         price = float(sig.get("price"))
         direction = str(sig.get("direction"))
         signal_type = str(sig.get("signal_type", ""))
         symbol = str(sig.get("symbol", ""))
         simulate_trade(price, direction, signal_type, symbol)
+        result = simulate_trade(price, direction, signal_type, symbol)
+        if result == "TP":
+            tp_count += 1
+        else:
+            sl_count += 1
+
+    total = tp_count + sl_count
+    net_pips = tp_count * TAKE_PROFIT_PIPS - sl_count * STOP_LOSS_PIPS
+    return {"tp": tp_count, "sl": sl_count, "total": total, "net_pips": net_pips}
