@@ -1,5 +1,6 @@
 import argparse
 import os
+import pandas as pd
 
 from api import BybitClient
 from structure import detect_break_of_structure, detect_fair_value_gaps
@@ -8,6 +9,8 @@ from executor import run, save_summary
 
 def get_signals(csv_path: str | None = None) -> list[dict]:
     """Fetch market data and return BOS/FVG signals."""
+def get_signals(csv_path: str | None = None) -> tuple[list[dict], pd.DataFrame]:
+    """Fetch market data and return BOS/FVG signals along with the data frame."""
     client = BybitClient()
     try:
         if csv_path:
@@ -17,10 +20,12 @@ def get_signals(csv_path: str | None = None) -> list[dict]:
     except Exception as exc:
         print(f"Error fetching data: {exc}")
         return []
+        return [], pd.DataFrame()
 
     if df is None or df.empty:
         print("No data retrieved")
         return []
+        return [], pd.DataFrame()
 
     try:
         df = detect_break_of_structure(df)
@@ -28,9 +33,12 @@ def get_signals(csv_path: str | None = None) -> list[dict]:
     except Exception as exc:
         print(f"Error processing data: {exc}")
         return []
+        return [], pd.DataFrame()
 
     signals = []
     for _, row in df.iterrows():
+    signals: list[dict] = []
+    for idx, row in df.iterrows():
         if row.get("bos"):
             signals.append(
                 {
@@ -38,6 +46,7 @@ def get_signals(csv_path: str | None = None) -> list[dict]:
                     "direction": "long" if row["bos"] == "bullish" else "short",
                     "signal_type": "BOS",
                     "symbol": "BTCUSDT",
+                    "index": int(idx),
                 }
             )
         if row.get("fvg"):
@@ -47,9 +56,11 @@ def get_signals(csv_path: str | None = None) -> list[dict]:
                     "direction": "long" if row["fvg"] == "bullish" else "short",
                     "signal_type": "FVG",
                     "symbol": "BTCUSDT",
+                    "index": int(idx),
                 }
             )
     return signals
+    return signals, df
 
 
 if __name__ == "__main__":
@@ -64,6 +75,8 @@ if __name__ == "__main__":
     print("Starting trading simulation on BTCUSDT (5m)")
     signals = get_signals(csv_path)
     summary = run(signals)
+    signals, df = get_signals(csv_path)
+    summary = run(signals, df)
 
     total = summary.get("total", 0)
     if total:
