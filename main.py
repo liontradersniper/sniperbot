@@ -50,3 +50,20 @@ if __name__ == "__main__":
     print("Starting trading simulation on BTCUSDT (5m)")
     signals = get_signals()
     run(signals)
+    summary = run(signals)
+
+    total = summary.get("total", 0)
+    if total:
+        tp = summary.get("tp", 0)
+        sl = summary.get("sl", 0)
+        tp_pct = tp / total * 100
+        sl_pct = sl / total * 100
+        net_pips = summary.get("net_pips", 0)
+
+        print("\nSimulation Summary:")
+        print(f"Total trades: {total}")
+        print(f"Take Profit: {tp} ({tp_pct:.2f}%)")
+        print(f"Stop Loss: {sl} ({sl_pct:.2f}%)")
+        print(f"Net result: {net_pips:.2f} pips")
+    else:
+        print("No trades executed.")
