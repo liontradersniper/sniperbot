@@ -87,3 +87,25 @@ class BybitClient:
         df_all.sort_values("open_time", inplace=True)
         df_all.reset_index(drop=True, inplace=True)
         return df_all
+
+    def load_ohlcv_from_csv(self, path: str) -> pd.DataFrame:
+        """Load OHLCV data from a CSV file.
+
+        The CSV should contain ``open_time``, ``open``, ``high``, ``low``,
+        ``close``, ``volume`` and optional ``turnover`` columns. ``open_time``
+        will be parsed as a timestamp.
+        """
+
+        df = pd.read_csv(path)
+        if "open_time" in df.columns:
+            df["open_time"] = pd.to_datetime(df["open_time"])
+
+        numeric_cols = [
+            c
+            for c in ["open", "high", "low", "close", "volume", "turnover"]
+            if c in df.columns
+        ]
+        df[numeric_cols] = df[numeric_cols].astype(float)
+        df.sort_values("open_time", inplace=True)
+        df.reset_index(drop=True, inplace=True)
+        return df
