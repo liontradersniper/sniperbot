@@ -1,3 +1,7 @@
+"""Utilities for simulating trade execution in Sniperbot."""
+
+import csv
+import os
 import random
 from typing import List, Dict
 from typing import Dict, List
@@ -78,3 +82,40 @@ def run(signals: List[Dict]) -> Dict[str, float]:
     total = tp_count + sl_count
     net_pips = tp_count * TAKE_PROFIT_PIPS - sl_count * STOP_LOSS_PIPS
     return {"tp": tp_count, "sl": sl_count, "total": total, "net_pips": net_pips}
+
+
+def save_summary(summary: Dict[str, int], path: str) -> None:
+    """Save a summary of trading results to a CSV file.
+
+    Parameters
+    ----------
+    summary : dict
+        Output dictionary from :func:`run`.
+    path : str
+        CSV file path to append the summary.
+    """
+
+    total = summary.get("total", 0)
+    tp = summary.get("tp", 0)
+    sl = summary.get("sl", 0)
+    tp_pct = tp / total * 100 if total else 0.0
+    sl_pct = sl / total * 100 if total else 0.0
+    net_pips = summary.get("net_pips", 0)
+
+    file_exists = os.path.isfile(path)
+    with open(path, "a", newline="") as f:
+        writer = csv.DictWriter(
+            f, fieldnames=["total", "tp", "sl", "tp_pct", "sl_pct", "net_pips"]
+        )
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(
+            {
+                "total": total,
+                "tp": tp,
+                "sl": sl,
+                "tp_pct": f"{tp_pct:.2f}",
+                "sl_pct": f"{sl_pct:.2f}",
+                "net_pips": f"{net_pips:.2f}",
+            }
+        )
