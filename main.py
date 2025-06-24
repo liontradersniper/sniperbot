@@ -1,6 +1,8 @@
+
+**main.py**
+```python
 from api import BybitClient
 from structure import detect_break_of_structure, detect_fair_value_gaps
-from executor import run
 from executor import run, save_summary
 
 
@@ -50,7 +52,6 @@ def get_signals() -> list[dict]:
 if __name__ == "__main__":
     print("Starting trading simulation on BTCUSDT (5m)")
     signals = get_signals()
-    run(signals)
     summary = run(signals)
 
     total = summary.get("total", 0)
