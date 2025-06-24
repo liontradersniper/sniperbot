@@ -3,7 +3,6 @@
 import csv
 import os
 import random
-from typing import List, Dict
 from typing import Dict, List
 
 from logger import log_trade
@@ -46,10 +45,6 @@ def simulate_trade(price: float, direction: str, signal_type: str = "", symbol: 
     print(f"Entry {direction.upper()} at {price:.2f}, SL {sl:.2f}, TP {tp:.2f} -> {result}")
     log_trade(price, direction, sl, tp, result, signal_type, symbol)
     return result
-
-
-def run(signals: List[Dict]) -> None:
-    """Execute trade simulations for a list of signals."""
 def run(signals: List[Dict]) -> Dict[str, float]:
     """Execute trade simulations and return summary statistics.
 
@@ -72,7 +67,6 @@ def run(signals: List[Dict]) -> Dict[str, float]:
         direction = str(sig.get("direction"))
         signal_type = str(sig.get("signal_type", ""))
         symbol = str(sig.get("symbol", ""))
-        simulate_trade(price, direction, signal_type, symbol)
         result = simulate_trade(price, direction, signal_type, symbol)
         if result == "TP":
             tp_count += 1
