@@ -1,6 +1,7 @@
 from api import BybitClient
 from structure import detect_break_of_structure, detect_fair_value_gaps
 from executor import run
+from executor import run, save_summary
 
 
 def get_signals() -> list[dict]:
@@ -67,3 +68,5 @@ if __name__ == "__main__":
         print(f"Net result: {net_pips:.2f} pips")
     else:
         print("No trades executed.")
+
+    save_summary(summary, "summary.csv")
