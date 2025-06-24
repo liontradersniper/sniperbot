@@ -2,6 +2,7 @@
 
 This repository contains a simulated trading bot based on the Inner Circle Trader (ICT) methodology. It connects to the Bybit Testnet API, analyzes 5-minute candle data, detects Break of Structure (BOS) and Fair Value Gaps (FVG), and simulates trades with fixed SL/TP logic.
 This project contains a small trading simulator based on the Inner Circle Trader (ICT) methodology. It connects to the Bybit Testnet API, retrieves 5‑minute candles, detects Break of Structure (BOS) and Fair Value Gaps (FVG), and then simulates trades with fixed stop‑loss and take‑profit levels.
+This repository contains a simulated trading bot based on the Inner Circle Trader (ICT) methodology. It connects to the Bybit Testnet API, analyzes 5‑minute candle data, detects Break of Structure (BOS) and Fair Value Gaps (FVG), and simulates trades with fixed SL/TP logic.
 
 > ⚠️ Simulation only – no real trades are executed.
 > ⚠️ Simulation only – no real orders are sent to the exchange.
@@ -16,6 +17,7 @@ This project contains a small trading simulator based on the Inner Circle Trader
 git clone https://github.com/liontradersniper/sniperbot.git
 cd sniperbot
 ```
+   ```
 2. Create and activate a virtual environment and install requirements:
 ```bash
 python3 -m venv .venv
@@ -45,6 +47,16 @@ Net result: 10.00 pips
 ```
 
 If enabled, the same figures are appended to `summary.csv` for later review.
+
+### Offline Backtesting
+
+Historical OHLCV data can be loaded from a CSV file instead of querying
+Bybit. Provide the path using the `--csv` command-line option or the
+`OHLCV_CSV` environment variable:
+
+```bash
+python main.py --csv path/to/data.csv
+```
 
 ## Dependencies
 
