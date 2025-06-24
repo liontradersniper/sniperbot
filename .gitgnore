@@ -1,4 +1,6 @@
 __pycache__/
-summary.csv
+.env
 trade_log.csv
+backtest_summary.csv
+summary.csv
 *.pyc
