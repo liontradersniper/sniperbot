@@ -1,3 +1,5 @@
+import argparse
+import os
 
 **main.py**
 ```python
@@ -7,10 +9,15 @@ from executor import run, save_summary
 
 
 def get_signals() -> list[dict]:
+def get_signals(csv_path: str | None = None) -> list[dict]:
     """Fetch market data and return BOS/FVG signals."""
     client = BybitClient()
     try:
         df = client.get_ohlcv("BTCUSDT")
+        if csv_path:
+            df = client.load_ohlcv_from_csv(csv_path)
+        else:
+            df = client.get_ohlcv("BTCUSDT")
     except Exception as exc:
         print(f"Error fetching data: {exc}")
         return []
@@ -50,8 +57,17 @@ def get_signals() -> list[dict]:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run Sniperbot backtest")
+    parser.add_argument(
+        "--csv", help="Load OHLCV data from CSV instead of querying Bybit"
+    )
+    args = parser.parse_args()
+
+    csv_path = args.csv or os.getenv("OHLCV_CSV")
+
     print("Starting trading simulation on BTCUSDT (5m)")
     signals = get_signals()
+    signals = get_signals(csv_path)
     summary = run(signals)
 
     total = summary.get("total", 0)
