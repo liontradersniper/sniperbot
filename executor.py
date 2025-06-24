@@ -4,6 +4,7 @@ import csv
 import os
 import random
 from typing import Dict, List
+import pandas as pd
 
 from logger import log_trade
 
@@ -13,9 +14,23 @@ TAKE_PROFIT_PIPS = 20
 
 def simulate_trade(price: float, direction: str, signal_type: str = "", symbol: str = "") -> str:
     """Simulate a trade and log the result.
+def simulate_trade(
+    df: pd.DataFrame,
+    index: int,
+    price: float,
+    direction: str,
+    signal_type: str = "",
+    symbol: str = "",
+    lookahead: int = 3,
+) -> str:
+    """Simulate a trade based on subsequent candle data and log the result.
 
     Parameters
     ----------
+    df : pandas.DataFrame
+        DataFrame containing OHLCV data.
+    index : int
+        Row index where the trade is opened.
     price : float
         Entry price of the trade.
     direction : str
@@ -29,6 +44,7 @@ def simulate_trade(price: float, direction: str, signal_type: str = "", symbol: 
     -------
     str
         Either "TP" if take profit was hit first or "SL" otherwise.
+        Either ``"TP"`` if take profit was hit first or ``"SL"`` otherwise.
     """
     direction = direction.lower()
     if direction not in {"long", "short"}:
@@ -43,15 +59,40 @@ def simulate_trade(price: float, direction: str, signal_type: str = "", symbol: 
 
     result = random.choice(["TP", "SL"])
     print(f"Entry {direction.upper()} at {price:.2f}, SL {sl:.2f}, TP {tp:.2f} -> {result}")
+    result = "SL"
+    end = min(index + lookahead, len(df) - 1)
+    for i in range(index + 1, end + 1):
+        high = float(df.loc[i, "high"])
+        low = float(df.loc[i, "low"])
+        if direction == "long":
+            if low <= sl:
+                result = "SL"
+                break
+            if high >= tp:
+                result = "TP"
+                break
+        else:
+            if high >= sl:
+                result = "SL"
+                break
+            if low <= tp:
+                result = "TP"
+                break
+    print(
+        f"Entry {direction.upper()} at {price:.2f}, SL {sl:.2f}, TP {tp:.2f} -> {result}"
+    )
     log_trade(price, direction, sl, tp, result, signal_type, symbol)
     return result
 def run(signals: List[Dict]) -> Dict[str, float]:
+def run(signals: List[Dict], df: pd.DataFrame) -> Dict[str, float]:
     """Execute trade simulations and return summary statistics.
 
     Parameters
     ----------
     signals : list[dict]
         Trading signals produced by the strategy.
+    df : pandas.DataFrame
+        OHLCV data corresponding to the signals.
 
     Returns
     -------
@@ -68,6 +109,8 @@ def run(signals: List[Dict]) -> Dict[str, float]:
         signal_type = str(sig.get("signal_type", ""))
         symbol = str(sig.get("symbol", ""))
         result = simulate_trade(price, direction, signal_type, symbol)
+        idx = int(sig.get("index", -1))
+        result = simulate_trade(df, idx, price, direction, signal_type, symbol)
         if result == "TP":
             tp_count += 1
         else:
@@ -93,23 +136,3 @@ def save_summary(summary: Dict[str, int], path: str) -> None:
     tp = summary.get("tp", 0)
     sl = summary.get("sl", 0)
     tp_pct = tp / total * 100 if total else 0.0
-    sl_pct = sl / total * 100 if total else 0.0
-    net_pips = summary.get("net_pips", 0)
-
-    file_exists = os.path.isfile(path)
-    with open(path, "a", newline="") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["total", "tp", "sl", "tp_pct", "sl_pct", "net_pips"]
-        )
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(
-            {
-                "total": total,
-                "tp": tp,
-                "sl": sl,
-                "tp_pct": f"{tp_pct:.2f}",
-                "sl_pct": f"{sl_pct:.2f}",
-                "net_pips": f"{net_pips:.2f}",
-            }
-        )
