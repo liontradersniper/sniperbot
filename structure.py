@@ -23,19 +23,29 @@ def detect_break_of_structure(df: pd.DataFrame) -> pd.DataFrame:
     bos: list[Optional[str]] = [None]
     swing_high = df['high'].iloc[0]
     swing_low = df['low'].iloc[0]
+    strength: list[float] = [0.0]
+    swing_high = df["high"].iloc[0]
+    swing_low = df["low"].iloc[0]
 
     for i in range(1, len(df)):
         high = df['high'].iloc[i]
         low = df['low'].iloc[i]
         if high > swing_high:
             bos.append('bullish')
+            bos.append("bullish")
+            strength.append(high - swing_high)
             swing_high = high
         elif low < swing_low:
             bos.append('bearish')
+            bos.append("bearish")
+            strength.append(swing_low - low)
             swing_low = low
         else:
             bos.append(None)
     df['bos'] = bos
+            strength.append(0.0)
+    df["bos"] = bos
+    df["bos_strength"] = strength
     return df
 
 
@@ -60,6 +70,7 @@ def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
     fvg: list[Optional[str]] = [None]
+    gap: list[float] = [0.0]
 
     for i in range(1, len(df) - 1):
         prev_high = df['high'].iloc[i - 1]
@@ -69,11 +80,19 @@ def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
 
         if next_low > prev_high:
             fvg.append('bullish')
+            fvg.append("bullish")
+            gap.append(next_low - prev_high)
         elif next_high < prev_low:
             fvg.append('bearish')
+            fvg.append("bearish")
+            gap.append(prev_low - next_high)
         else:
             fvg.append(None)
+            gap.append(0.0)
 
     fvg.append(None)  # Final row, no 3rd candle
     df['fvg'] = fvg
+    gap.append(0.0)
+    df["fvg"] = fvg
+    df["fvg_gap"] = gap
     return df
