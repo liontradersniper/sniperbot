@@ -1,1 +1,12 @@
-# sniperbot
+# Sniperbot (ICT Trading Simulation)
+
+This repository contains a simulated trading bot based on the Inner Circle Trader (ICT) methodology. It connects to the Bybit Testnet API, analyzes 5-minute candle data, detects Break of Structure (BOS) and Fair Value Gaps (FVG), and simulates trades with fixed SL/TP logic.
+
+> ⚠️ Simulation only – no real trades are executed.
+
+## Setup
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/liontradersniper/sniperbot.git
+   cd sniperbot
