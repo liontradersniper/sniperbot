@@ -1,3 +1,5 @@
+# executor.py
+
 """Utilities for simulating trade execution in Sniperbot."""
 
 import csv
@@ -8,6 +10,7 @@ from typing import Dict, List
 import pandas as pd
 
 from logger import log_trade
+from structure import filter_signals
 
 STOP_LOSS_PIPS = 10
 TAKE_PROFIT_PIPS = 20
@@ -22,30 +25,6 @@ def simulate_trade(
     symbol: str = "",
     lookahead: int = 3,
 ) -> str:
-    """Simulate a trade based on subsequent candle data and log the result.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        DataFrame containing OHLCV data.
-    index : int
-        Row index where the trade is opened.
-    price : float
-        Entry price of the trade.
-    direction : str
-        ``"long"`` or ``"short"``.
-    signal_type : str, optional
-        The type of trading signal.
-    symbol : str, optional
-        The traded symbol.
-    lookahead : int, optional
-        Number of candles to inspect after the entry candle.
-
-    Returns
-    -------
-    str
-        ``"TP"`` if take profit was hit first or ``"SL"`` otherwise.
-    """
     direction = direction.lower()
     if direction not in {"long", "short"}:
         raise ValueError("direction must be 'long' or 'short'")
@@ -84,11 +63,12 @@ def simulate_trade(
 
 
 def run(signals: List[Dict], df: pd.DataFrame) -> Dict[str, float]:
-    """Execute trade simulations and return summary statistics."""
+    """Execute trade simulations using filtered signals."""
+    filtered = filter_signals(df, signals)
     tp_count = 0
     sl_count = 0
 
-    for sig in signals:
+    for sig in filtered:
         price = float(sig.get("price"))
         direction = str(sig.get("direction"))
         signal_type = str(sig.get("signal_type", ""))
