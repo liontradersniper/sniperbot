@@ -3,7 +3,10 @@
 import csv
 import os
 import random
+from datetime import datetime
 from typing import Dict, List
+import os
+import csv
 import pandas as pd
 
 from logger import log_trade
@@ -46,6 +49,8 @@ def simulate_trade(
         Either "TP" if take profit was hit first or "SL" otherwise.
         Either ``"TP"`` if take profit was hit first or ``"SL"`` otherwise.
     """
+    """Simulate a trade based on subsequent candle data and log the result."""
+
     direction = direction.lower()
     if direction not in {"long", "short"}:
         raise ValueError("direction must be 'long' or 'short'")
@@ -80,8 +85,13 @@ def simulate_trade(
                 break
     print(
         f"Entry {direction.upper()} at {price:.2f}, SL {sl:.2f}, TP {tp:.2f} -> {result}"
+
+    timestamp = (
+        df.loc[index, "open_time"].isoformat() if "open_time" in df.columns else None
     )
     log_trade(price, direction, sl, tp, result, signal_type, symbol)
+    print(f"Entry {direction.upper()} at {price:.2f}, SL {sl:.2f}, TP {tp:.2f} -> {result}")
+    log_trade(price, direction, sl, tp, result, signal_type, symbol, timestamp)
     return result
 def run(signals: List[Dict]) -> Dict[str, float]:
 def run(signals: List[Dict], df: pd.DataFrame) -> Dict[str, float]:
@@ -99,6 +109,8 @@ def run(signals: List[Dict], df: pd.DataFrame) -> Dict[str, float]:
     dict
         Summary statistics with keys ``tp``, ``sl``, ``total``, and ``net_pips``.
     """
+def run(signals: List[Dict], df: pd.DataFrame) -> Dict[str, float]:
+    """Execute trade simulations and return summary statistics."""
 
     tp_count = 0
     sl_count = 0
@@ -131,8 +143,29 @@ def save_summary(summary: Dict[str, int], path: str) -> None:
     path : str
         CSV file path to append the summary.
     """
+def save_summary(summary: Dict[str, float], path: str) -> None:
+    """Save a summary of trading results to a CSV file."""
 
     total = summary.get("total", 0)
     tp = summary.get("tp", 0)
     sl = summary.get("sl", 0)
     tp_pct = tp / total * 100 if total else 0.0
+    sl_pct = sl / total * 100 if total else 0.0
+    net_pips = summary.get("net_pips", 0.0)
+
+    row = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "total": total,
+        "tp": tp,
+        "sl": sl,
+        "tp_pct": f"{tp_pct:.2f}",
+        "sl_pct": f"{sl_pct:.2f}",
+        "net_pips": f"{net_pips:.2f}",
+    }
+
+    file_exists = os.path.isfile(path)
+    with open(path, mode="a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=row.keys())
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
