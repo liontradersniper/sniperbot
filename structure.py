@@ -1,26 +1,12 @@
+# structure.py
+
 """Utility functions for detecting BOS and FVG in OHLCV data."""
 
-from typing import Optional
-
+from typing import Optional, List, Dict
 import pandas as pd
 
 
 def detect_break_of_structure(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Detect simple Break of Structure (BOS).
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        DataFrame with ``high`` and ``low`` columns.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Copy of ``df`` with new ``bos`` and ``bos_strength`` columns. ``bos``
-        contains ``"bullish"``, ``"bearish"`` or ``None`` for each row. The
-        ``bos_strength`` column represents the size of the break.
-    """
     df = df.copy()
 
     required = {"high", "low"}
@@ -59,21 +45,6 @@ def detect_break_of_structure(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Detect 3-candle Fair Value Gaps (FVG).
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        DataFrame with ``high`` and ``low`` columns.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Copy of ``df`` with new ``fvg`` and ``fvg_gap`` columns. ``fvg`` contains
-        ``"bullish"``, ``"bearish"`` or ``None`` for each row. ``fvg_gap``
-        represents the size of the gap when present.
-    """
     df = df.copy()
 
     required = {"high", "low"}
@@ -105,10 +76,65 @@ def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
             fvg.append(None)
             gap.append(0.0)
 
-    # Append placeholder for final row which cannot form a pattern
     fvg.append(None)
     gap.append(0.0)
 
     df["fvg"] = fvg
     df["fvg_gap"] = gap
     return df
+
+
+def is_strong_candle(row: pd.Series) -> bool:
+    body = abs(row["close"] - row["open"])
+    range_ = row["high"] - row["low"]
+    return range_ > 0 and (body / range_) >= 0.5 and (
+        (row["close"] > row["open"]) or (row["close"] < row["open"])
+    )
+
+
+def is_counter_trend(df: pd.DataFrame, idx: int, direction: str) -> bool:
+    recent = df[max(0, idx - 3):idx]
+    if len(recent) < 3:
+        return False
+    if direction == "long":
+        return all(row["close"] < row["open"] for _, row in recent.iterrows())
+    else:
+        return all(row["close"] > row["open"] for _, row in recent.iterrows())
+
+
+def filter_signals(df: pd.DataFrame, signals: List[Dict]) -> List[Dict]:
+    filtered = []
+    last_entry_idx = -10
+
+    for i in range(len(signals)):
+        sig = signals[i]
+        if sig["type"] != "BOS" or sig.get("strength", 0.0) < 2.0:
+            continue
+
+        direction = sig["direction"]
+        for j in range(i + 1, min(i + 4, len(signals))):
+            next_sig = signals[j]
+            if next_sig["type"] == "FVG" and next_sig["direction"] == direction:
+                idx = next_sig["index"]
+                if idx >= len(df):
+                    continue
+                price = df.loc[idx, "close"]
+                gap_threshold = 0.005 * price
+                if next_sig.get("gap", 0.0) < gap_threshold:
+                    continue
+                if not is_strong_candle(df.loc[idx]):
+                    continue
+                if idx - last_entry_idx < 5:
+                    continue
+                if is_counter_trend(df, idx, direction):
+                    continue
+                filtered.append({
+                    "index": idx,
+                    "price": price,
+                    "direction": direction,
+                    "signal_type": "BOS+FVG"
+                })
+                last_entry_idx = idx
+                break
+
+    return filtered
