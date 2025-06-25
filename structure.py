@@ -1,4 +1,5 @@
 # structure.py
+# structure.py
 
 """Utility functions for detecting BOS and FVG in OHLCV data."""
 
