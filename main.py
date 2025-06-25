@@ -7,7 +7,11 @@ from typing import Dict, List, Tuple
 import pandas as pd
 
 from api import BybitClient
-from structure import detect_break_of_structure, detect_fair_value_gaps
+from structure import (
+    detect_break_of_structure,
+    detect_fair_value_gaps,
+    filter_signals,
+)
 from executor import run, save_summary
 
 
@@ -46,7 +50,7 @@ def get_signals(csv_path: str | None = None) -> Tuple[List[Dict], pd.DataFrame]:
                 "index": int(idx),
             }
             if "bos_strength" in row:
-                signal["bos_strength"] = float(row["bos_strength"])
+                signal["strength"] = float(row["bos_strength"])
             signals.append(signal)
 
         fvg = row.get("fvg")
@@ -59,7 +63,7 @@ def get_signals(csv_path: str | None = None) -> Tuple[List[Dict], pd.DataFrame]:
                 "index": int(idx),
             }
             if "fvg_gap" in row:
-                signal["fvg_gap"] = float(row["fvg_gap"])
+                signal["gap"] = float(row["fvg_gap"])
             signals.append(signal)
 
     return signals, df
@@ -92,6 +96,11 @@ if __name__ == "__main__":
 
     print("Starting trading simulation on BTCUSDT (5m)")
     signals, df = get_signals(csv_path)
-    summary = run(signals, df)
+
+    print(f"Initial signals detected: {len(signals)}")
+    filtered_signals = filter_signals(df, signals)
+    print(f"Signals after filtering: {len(filtered_signals)}")
+
+    summary = run(filtered_signals, df)
     print_summary(summary)
     save_summary(summary, "summary.csv")
