@@ -7,19 +7,40 @@ def detect_break_of_structure(df: pd.DataFrame) -> pd.DataFrame:
 
     A bullish BOS occurs when price makes a higher high.
     A bearish BOS occurs when price makes a lower low.
+    A bullish BOS occurs when price makes a higher high relative to the
+    previous swing high. A bearish BOS occurs when price makes a lower low
+    relative to the previous swing low.
 
     Parameters
     ----------
     df : pandas.DataFrame
         DataFrame with at least ``high`` and ``low`` columns.
+        DataFrame with ``high`` and ``low`` columns.
 
     Returns
     -------
     pandas.DataFrame
         The original DataFrame with a new ``bos`` column
         containing ``"bullish"`` or ``"bearish"`` when a BOS is detected.
+        Copy of ``df`` with new ``bos`` and ``bos_strength`` columns. ``bos``
+        contains ``"bullish"``, ``"bearish"`` or ``None`` for each row. The
+        optional ``bos_strength`` metric represents the size of the break.
     """
+
     df = df.copy()
+
+    # Validate required columns
+    required_cols = {"high", "low"}
+    if not required_cols.issubset(df.columns):
+        df["bos"] = None
+        df["bos_strength"] = 0.0
+        return df
+
+    if len(df) < 2:
+        df["bos"] = [None] * len(df)
+        df["bos_strength"] = [0.0] * len(df)
+        return df
+
     bos: list[Optional[str]] = [None]
     swing_high = df['high'].iloc[0]
     swing_low = df['low'].iloc[0]
@@ -30,6 +51,8 @@ def detect_break_of_structure(df: pd.DataFrame) -> pd.DataFrame:
     for i in range(1, len(df)):
         high = df['high'].iloc[i]
         low = df['low'].iloc[i]
+        high = df["high"].iloc[i]
+        low = df["low"].iloc[i]
         if high > swing_high:
             bos.append('bullish')
             bos.append("bullish")
@@ -44,6 +67,7 @@ def detect_break_of_structure(df: pd.DataFrame) -> pd.DataFrame:
             bos.append(None)
     df['bos'] = bos
             strength.append(0.0)
+
     df["bos"] = bos
     df["bos_strength"] = strength
     return df
@@ -56,6 +80,9 @@ def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
     is greater than the high of the first candle.
     A bearish FVG is present when the high of the third candle
     is less than the low of the first candle.
+    A bullish FVG is present when the low of the next candle is greater than
+    the high of the previous candle. A bearish FVG is present when the high of
+    the next candle is less than the low of the previous candle.
 
     Parameters
     ----------
@@ -67,8 +94,25 @@ def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
     pandas.DataFrame
         The DataFrame with a new ``fvg`` column indicating
         ``"bullish"`` or ``"bearish"`` FVGs.
+        Copy of ``df`` with new ``fvg`` and ``fvg_gap`` columns. ``fvg``
+        contains ``"bullish"``, ``"bearish"`` or ``None`` for each row. The
+        optional ``fvg_gap`` metric represents the size of the gap.
     """
+
     df = df.copy()
+
+    # Validate required columns
+    required_cols = {"high", "low"}
+    if not required_cols.issubset(df.columns):
+        df["fvg"] = None
+        df["fvg_gap"] = 0.0
+        return df
+
+    if len(df) < 3:
+        df["fvg"] = [None] * len(df)
+        df["fvg_gap"] = [0.0] * len(df)
+        return df
+
     fvg: list[Optional[str]] = [None]
     gap: list[float] = [0.0]
 
@@ -77,6 +121,10 @@ def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
         next_low = df['low'].iloc[i + 1]
         prev_low = df['low'].iloc[i - 1]
         next_high = df['high'].iloc[i + 1]
+        prev_high = df["high"].iloc[i - 1]
+        prev_low = df["low"].iloc[i - 1]
+        next_low = df["low"].iloc[i + 1]
+        next_high = df["high"].iloc[i + 1]
 
         if next_low > prev_high:
             fvg.append('bullish')
@@ -92,7 +140,10 @@ def detect_fair_value_gaps(df: pd.DataFrame) -> pd.DataFrame:
 
     fvg.append(None)  # Final row, no 3rd candle
     df['fvg'] = fvg
+    # The last row cannot form a 3-candle pattern
+    fvg.append(None)
     gap.append(0.0)
+
     df["fvg"] = fvg
     df["fvg_gap"] = gap
     return df
