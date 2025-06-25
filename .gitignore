@@ -1,3 +1,6 @@
+
+```text
+# .gitignore
 __pycache__/
 .env
 trade_log.csv
