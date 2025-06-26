@@ -1,5 +1,6 @@
 diff --git a//dev/null b/AGENTS.md
-index 0000000000000000000000000000000000000000..5a56e86fd70f7b8d83898ffe11eb2f3e737116bb 100644
+index 0000000000000000000000000000000000000000..5a56e86fd70f7b8d83898ffe11eb2f3e
+737116bb 100644
 --- a//dev/null
 +++ b/AGENTS.md
 @@ -0,0 +1,40 @@
@@ -42,4 +43,3 @@ index 0000000000000000000000000000000000000000..5a56e86fd70f7b8d83898ffe11eb2f3e
 +- Follow standard PEP 8 formatting and include type hints and docstrings where practical.
 +- Keep commits focused and descriptive. When modifying the key files above, update related documentation if needed.
 +- Dependencies are minimal; avoid adding new ones unless necessary for core functionality.
-+
