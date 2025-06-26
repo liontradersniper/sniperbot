@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `executor.py` trade loop simplified and duplicate imports removed.
 - `main.py` now records simulation summary to file.
+- Trade runner now expects pre-filtered signals and skips internal filtering.
 
 ## [0.1.0] - 2025-06-24
 ### Changed
