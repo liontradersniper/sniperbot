@@ -1,5 +1,4 @@
 # executor.py
-# executor.py
 
 """Utilities for simulating trade execution in Sniperbot."""
 
