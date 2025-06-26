@@ -1,9 +1,3 @@
-# structure.py
-# structure.py
-
-"""Utility functions for detecting BOS and FVG in OHLCV data."""
-
-from typing import Optional, List, Dict
 import pandas as pd
 
 
