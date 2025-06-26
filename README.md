@@ -17,3 +17,4 @@ This repository contains a simulated trading bot based on the Inner Circle Trade
 ```bash
 git clone https://github.com/liontradersniper/sniperbot.git
 cd sniperbot
+//Restore README.md to v1.0-stable: setup, usage, and disclaimer for Sniperbot simulation
