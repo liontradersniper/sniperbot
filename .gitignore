@@ -1,3 +1,4 @@
+# .gitignore
 ```text
 # .gitignore
 __pycache__/
@@ -6,3 +7,4 @@ trade_log.csv
 backtest_summary.csv
 summary.csv
 *.pyc
+
