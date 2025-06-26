@@ -1,3 +1,4 @@
+# generate_ohlcv.py
 """Generate a synthetic OHLCV dataset for Sniperbot backtesting."""
 
 from __future__ import annotations
