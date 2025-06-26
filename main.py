@@ -1,4 +1,3 @@
-# main.py
 """Entry point for Sniperbot backtesting."""
 
 import argparse
